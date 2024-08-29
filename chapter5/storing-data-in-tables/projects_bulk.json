@@ -1,0 +1,144 @@
+{
+    "projects": [
+        {
+            "PutRequest": {
+                "Item": {
+                    "Project_ID": {
+                        "S": "3f54f143-6df4-40a3-8184-f217750c6374"
+                    },
+                    "Dept": {
+                        "S": "Operations"
+                    },
+                    "Dept_ID": {
+                        "N": "0000"
+                    },
+                    "Project_Name": {
+                        "S": "IAM Buildout"
+                    },
+                    "Owner": {
+                        "S": "Amit Omar"
+                    },
+                    "Language": {
+                        "S": "JSON"
+                    },
+                    "Contact": {
+                        "S": "cloud_ops@testcompany.com"
+                    }
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "Project_ID": {
+                        "S": "6dba9663-df3f-437e-ade5-2477a56ebd1e"
+                    },
+                    "Dept": {
+                        "S": "Operations"
+                    },
+                    "Dept_ID": {
+                        "N": "0000"
+                    },
+                    "Project_Name": {
+                        "S": "Transit VPC"
+                    },
+                    "Owner": {
+                        "S": "Joey Balogney"
+                    },
+                    "Builds": {
+                        "NS": [
+                            "25263352"
+                        ]
+                    },
+                    "Language": {
+                        "S": "YAML"
+                    },
+                    "Contact": {
+                        "S": "cloud_ops@testcompany.com"
+                    }
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "Project_ID": {
+                        "S": "fdc28b6f-ecb9-4a57-a08f-b0bbe5472703"
+                    },
+                    "Dept": {
+                        "S": "Customer Service"
+                    },
+                    "Dept_ID": {
+                        "N": "0040"
+                    },
+                    "Project_Name": {
+                        "S": "Ticket Tracker"
+                    },
+                    "Owner": {
+                        "S": "Debra Rondell"
+                    },
+                    "Builds": {
+                        "NS": [
+                            "215261512",
+                            "215244542"
+                        ]
+                    },
+                    "Language": {
+                        "S": "Javascript"
+                    },
+                    "Contact": {
+                        "S": "customer_servce@testcompany.com"
+                    }
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "Project_ID": {
+                        "S": "82ac017d-f560-4c97-bea9-44a5e6c4366e"
+                    },
+                    "Dept": {
+                        "S": "DevSec"
+                    },
+                    "Dept_ID": {
+                        "N": "0002"
+                    },
+                    "Project_Name": {
+                        "S": "Static Code Scan"
+                    },
+                    "Contact": {
+                        "S": "devsec@testcompany.com"
+                    }
+                }
+            }
+        },
+        {
+            "PutRequest": {
+                "Item": {
+                    "Project_ID": {
+                        "S": "b7165546-79df-4b7f-b557-87b821a59c61"
+                    },
+                    "Dept": {
+                        "S": "Training"
+                    },
+                    "Dept_ID": {
+                        "N": "0100"
+                    },
+                    "Project_Name": {
+                        "S": "Moodle Test"
+                    },
+                    "Owner": {
+                        "S": "Wanda Johanson"
+                    },
+                    "Language": {
+                        "S": "php"
+                    },
+                    "Contact": {
+                        "S": "training@testcompany.com"
+                    }
+                }
+            }
+        }
+    ]
+}

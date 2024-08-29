@@ -1,0 +1,27 @@
+[
+  {
+    "Create": {
+      "IndexName": "contact",
+      "KeySchema": [
+        {
+          "AttributeName": "Contact",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "Language",
+          "KeyType": "RANGE"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "INCLUDE",
+        "NonKeyAttributes": [
+          "Project_ID"
+        ]
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 3,
+        "WriteCapacityUnits": 2
+      }
+    }
+  }
+]

@@ -1,0 +1,28 @@
+{
+    "Project_ID": {
+        "S": "cf30c388-7510-400f-b0d7-2b542bf5925f"
+    },
+    "Dept": {
+        "S": "Test Team"
+    },
+    "Dept_ID": {
+        "N": "0001"
+    },
+    "Project_Name": {
+        "S": "Serverless Forms"
+    },
+    "Owner": {
+        "S": "Jerry Imoto"
+    },
+    "Builds": {
+        "NS": [
+            "2212121"
+        ]
+    },
+    "Language": {
+        "S": "python"
+    },
+    "Contact": {
+        "S": "test_team@testcompany.com"
+    }
+}

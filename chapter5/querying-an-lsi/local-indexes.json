@@ -1,0 +1,21 @@
+[
+  {
+    "IndexName": "owner",
+    "KeySchema": [
+      {
+        "AttributeName": "Dept",
+        "KeyType": "HASH"
+      },
+      {
+        "AttributeName": "Owner",
+        "KeyType": "RANGE"
+      }
+    ],
+    "Projection": {
+      "NonKeyAttributes": [
+        "Project_ID"
+      ],
+      "ProjectionType": "INCLUDE"
+    }
+  }
+]
