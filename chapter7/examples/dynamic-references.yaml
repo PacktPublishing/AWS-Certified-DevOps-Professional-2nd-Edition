@@ -1,0 +1,21 @@
+Parameters:
+  Name:
+    Description: The name of the database
+    Type: String
+    Default: '{{resolve:ssm:DBName:3}}'
+  SecurityGroup:
+    Description: The name of the database
+    Type: AWS::EC2::SecurityGroup::Id
+
+Resources:
+  RDSInstance:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      Engine: postgres
+      DBName: !Ref Name
+      AllocatedStorage: '10'
+      DBInstanceClass: db.t3.micro
+      MasterUsername: '{{resolve:secretsmanager:DBCreds:SecretString:username}}'
+      MasterUserPassword: '{{resolve:ssm-secure:DBPassword}}'
+      VPCSecurityGroups:
+      - !Ref SecurityGroup

@@ -1,0 +1,69 @@
+Parameters:
+  Name:
+    Description: The name of the DynammoDB Table
+    Type: String
+    MinLength: "5"
+    MaxLength: "100"
+  BillingMode:
+    Description: The billing mode of the DynammoDB Table
+    Type: String
+    AllowedValues:
+    - PROVISIONED
+    - PAY_PER_REQUEST
+  ReadCapacity:
+    Description: The provisioned read capacity of the DynammoDB Table
+    Type: Number
+    MinValue: "2"
+    MaxValue: "10"
+    Default: "2"
+  WriteCapacity:
+    Description: The provisioned read capacity of the DynammoDB Table
+    Type: Number
+    MinValue: "4"
+    MaxValue: "15"
+    Default: "4"
+
+Conditions:
+  IsProvisionedMode: !Equals
+  - !Ref BillingMode
+  - PROVISIONED
+
+Resources:
+  DynamoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Ref: Name
+      AttributeDefinitions:
+      - AttributeName: Dept
+        AttributeType: S
+      - AttributeName: Project_Name
+        AttributeType: S
+      - AttributeName: Owner
+        AttributeType: S
+      BillingMode:
+        Ref: BillingMode
+      KeySchema:
+      - AttributeName: Dept
+        KeyType: HASH
+      - AttributeName: Project_Name
+        KeyType: RANGE
+      LocalSecondaryIndexes:
+      - IndexName: owner
+        KeySchema:
+        - AttributeName: Dept
+          KeyType: HASH
+        - AttributeName: Owner
+          KeyType: RANGE
+        Projection:
+          NonKeyAttributes:
+          - Project_ID
+          ProjectionType: INCLUDE
+      ProvisionedThroughput:
+        !If
+        - IsProvisionedMode
+        - ReadCapacityUnits:
+            Ref: ReadCapacity
+          WriteCapacityUnits:
+            Ref: WriteCapacity
+        - !Ref AWS::NoValue

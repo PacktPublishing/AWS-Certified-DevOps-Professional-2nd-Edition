@@ -1,0 +1,41 @@
+Transform: 'AWS::LanguageExtensions'
+Parameters:
+  Name:
+    Description: The name of the DynammoDB Table
+    Type: String
+    MinLength: "5"
+    MaxLength: "100"
+  Environments:
+    Description: The provisioned read capacity of the DynammoDB Table
+    Type: CommaDelimitedList
+    AllowedValues:
+    - dev
+    - staging
+    - prod
+
+Resources:
+  Fn::ForEach::Tables:
+  - Environment
+  - !Ref Environments
+  - 'DynamoTable${Environment}':
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: !Sub
+        - "${name}-${environment}"
+        - name:
+            Ref: Name
+          environment:
+            Ref: Environment
+        AttributeDefinitions:
+        - AttributeName: Dept
+          AttributeType: S
+        - AttributeName: Project_Name
+          AttributeType: S
+        KeySchema:
+        - AttributeName: Dept
+          KeyType: HASH
+        - AttributeName: Project_Name
+          KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 2
+          WriteCapacityUnits: 4

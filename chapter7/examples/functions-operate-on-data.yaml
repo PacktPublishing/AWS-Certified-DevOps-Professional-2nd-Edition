@@ -1,0 +1,35 @@
+Parameters:
+  Name:
+    Description: The name of the DynammoDB Table
+    Type: String
+    MinLength: "5"
+    MaxLength: "100"
+  Environment:
+    Description: The environment the DynammoDB Table will be used for
+    Type: String
+    AllowedValues:
+    - dev
+    - staging
+    - prod
+
+Resources:
+  DynamoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub
+      - "${name}-${environment}"
+      - name: !Ref Name
+        environment: !Ref Environment
+      AttributeDefinitions:
+      - AttributeName: Dept
+        AttributeType: S
+      - AttributeName: Project_Name
+        AttributeType: S
+      KeySchema:
+      - AttributeName: Dept
+        KeyType: HASH
+      - AttributeName: Project_Name
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 4

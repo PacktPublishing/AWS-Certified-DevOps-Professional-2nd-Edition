@@ -1,0 +1,94 @@
+Description: This template creates an autoscaling group running nginx
+
+Transform: AWS::LanguageExtensions
+
+Parameters:
+  Environment:
+    Description: The environment this stack is for
+    Type: String
+    AllowedPattern: '[a-z]{3,}'
+  VpcId:
+    Description: The ID of the VPC to use
+    Type: AWS::EC2::VPC::Id
+  SubnetIds:
+    Description: The subnet to create the instances in
+    Type: List<AWS::EC2::Subnet::Id>
+  AmiId:
+    Description: AMI to use for the instances
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    # Fetch and use the latest AL2023 image
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-minimal-kernel-default-x86_64
+  MinInstances:
+    Description: Minimum number of nginx instances to run
+    Type: Number
+    MinValue: 1
+    Default: 1
+  MaxInstances:
+    Description: Maximum number of nginx instances to run
+    Type: Number
+    MinValue: 1
+    Default: 1
+
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription:
+        Fn::Sub: nginx server for ${Environment}
+      GroupName:
+        Fn::Sub: ${AWS::StackName}-${Environment}-nginx-server
+      VpcId:
+        Ref: VpcId
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: ${Environment}-nginx-server
+      - Key: Environment
+        Value:
+          Ref: Environment
+  LaunchTemplate:
+    Type: 'AWS::EC2::LaunchTemplate'
+    Properties:
+      LaunchTemplateName:
+        Fn::Sub: ${AWS::StackName}-${Environment}-nginx-server
+      LaunchTemplateData:
+        ImageId:
+          Ref: AmiId
+        InstanceType: t3.micro
+        UserData:
+          Fn::Base64: |
+            dnf install nginx -y
+        SecurityGroupIds:
+        - Ref: SecurityGroup
+  ASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName:
+        Fn::Sub: ${AWS::StackName}-${Environment}-nginx-server
+      LaunchTemplate:
+        LaunchTemplateId:
+          Ref: LaunchTemplate
+        Version:
+          Fn::GetAtt:
+          - LaunchTemplate
+          - LatestVersionNumber
+      MinSize:
+        Ref: MinInstances
+      MaxSize:
+        Ref: MaxInstances
+      VPCZoneIdentifier:
+        Ref: SubnetIds
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: ${Environment}-nginx-server
+        PropagateAtLaunch: 'true'
+      - Key: Environment
+        Value:
+          Ref: Environment
+        PropagateAtLaunch: 'true'

@@ -1,0 +1,42 @@
+Parameters:
+  Name:
+    Description: The name of the DynammoDB Table
+    Type: String
+    MinLength: "5"
+    MaxLength: "100"
+  BillingMode:
+    Description: The billing mode of the DynammoDB Table
+    Type: String
+    AllowedValues:
+    - PROVISIONED
+    - PAY_PER_REQUEST
+
+Conditions:
+  IsProvisionedMode: !Equals
+  - !Ref BillingMode
+  - PROVISIONED
+
+Resources:
+  DynamoTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName:
+        Ref: Name
+      AttributeDefinitions:
+      - AttributeName: Dept
+        AttributeType: S
+      - AttributeName: Project_Name
+        AttributeType: S
+      BillingMode:
+        Ref: BillingMode
+      KeySchema:
+      - AttributeName: Dept
+        KeyType: HASH
+      - AttributeName: Project_Name
+        KeyType: RANGE
+      ProvisionedThroughput:
+        !If
+        - IsProvisionedMode
+        - ReadCapacityUnits: 3
+          WriteCapacityUnits: 1
+        - !Ref AWS::NoValue
