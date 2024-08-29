@@ -1,0 +1,15 @@
+{
+  "Version": "2018-11-08",
+  "DestinationReferences": [
+    "refs/heads/main"
+  ],
+  "Statements": [
+    {
+      "Type": "Approvers",
+      "NumberOfApprovalsNeeded": 1,
+      "ApprovalPoolMembers": [
+        "CodeCommitApprovers:*"
+      ]
+    }
+  ]
+}

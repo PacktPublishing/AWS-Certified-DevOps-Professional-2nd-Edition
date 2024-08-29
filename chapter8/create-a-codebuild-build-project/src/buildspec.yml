@@ -1,0 +1,31 @@
+version: 0.2
+
+env:
+  variables:
+    DOCKER_IMAGE_REPO_NAME: codebuild-app
+
+phases:
+  pre_build:
+    commands:
+    - echo Logging in to Amazon ECR
+    - aws --version
+    - ECR_DOCKER_REPO="$(echo ${CODEBUILD_BUILD_ARN} | cut -f5 -d':').dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS  --password-stdin $ECR_DOCKER_REPO
+    - export DOCKER_IMAGE_FULL_NAME=$ECR_DOCKER_REPO/$DOCKER_IMAGE_REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
+
+  build:
+    commands:
+    - echo Build started on `date`
+    - docker build --tag $DOCKER_IMAGE_FULL_NAME .
+
+  post_build:
+    commands:
+    - echo Build completed on `date`
+    - echo Pushing the Docker image...
+    - docker push $DOCKER_IMAGE_FULL_NAME
+    - echo Writing image name to file...
+    - echo $DOCKER_IMAGE_FULL_NAME > image-name.txt
+
+artifacts:
+  files:
+  - image-name.txt
