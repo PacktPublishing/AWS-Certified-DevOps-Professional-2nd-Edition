@@ -1,0 +1,97 @@
+Description: This template creates the IAM roles needed for StackSets
+
+Parameters:
+  S3Bucket:
+    Description: The base name of the S3 bucket containing deployment revisions
+    Type: String
+  CodeDeployServiceRoleArn:
+    Description: The ARN of the service role to use for CodeDeploy
+    Type: String
+
+Resources:
+  AdminRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: ${AWS::StackName}-admin
+      Description: Admin role for StackSet
+      Policies:
+      - PolicyName: AWSCloudFormationStackSetAdministrationRole
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action: 'sts:AssumeRole'
+            Resource:
+            - Fn::Sub: 'arn:aws:iam::${AWS::AccountId}:role/${AWS::StackName}-execution'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: 'sts:AssumeRole'
+          Principal:
+            Service: cloudformation.amazonaws.com
+          Condition:
+            StringEquals:
+              'aws:SourceAccount':
+                Ref: 'AWS::AccountId'
+            StringLike:
+              'aws:SourceArn':
+                Fn::Sub: 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stackset/*'
+      Tags:
+      - Key: Name
+        Value: AWSCloudFormationStackSetAdministrationRole
+
+  ExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: ${AWS::StackName}-execution
+      Description: Execution role for StackSet
+      Policies:
+      - PolicyName: AWSCloudFormationStackSetExecutionRole
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - 'cloudformation:*'
+            - 'ec2:*'
+            - 'elasticloadbalancing:*'
+            - 'autoscaling:*'
+            - 'codedeploy:*'
+            - 's3:Get*'
+            - 's3:List*'
+            - 's3:Describe*'
+            - 'ssm:GetParameters'
+            - 'iam:PassRole'
+            Resource: '*'
+          - Effect: Allow
+            Action: 's3:*'
+            Resource:
+              Fn::Sub: arn:aws:s3:::${S3Bucket}-*
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action: 'sts:AssumeRole'
+          Principal:
+            AWS:
+              Fn::GetAtt:
+              - AdminRole
+              - Arn
+      Tags:
+      - Key: Name
+        Value: AWSCloudFormationStackSetExecutionRole
+
+Outputs:
+  AdminRoleArn:
+    Description: The ARN of the admin IAM role
+    Value:
+      Fn::GetAtt:
+      - AdminRole
+      - Arn
+  ExecutionRoleName:
+    Description: The Name of the execution IAM role
+    Value:
+      Ref: ExecutionRole

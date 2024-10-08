@@ -1,0 +1,6 @@
+version: 0.0
+os: linux
+file_exists_behavior: OVERWRITE
+files:
+- source: /src
+  destination: /usr/share/nginx/html

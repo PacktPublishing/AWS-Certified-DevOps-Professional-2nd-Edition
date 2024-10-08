@@ -1,0 +1,107 @@
+Description: This template creates AWS resources needed to run nginx instances for an environment
+
+Transform: AWS::LanguageExtensions
+
+Parameters:
+  Name:
+    Description: The name of the environment to create
+    Type: String
+    AllowedPattern: '[a-z]{3,}'
+  NetworkCIDR:
+    Description: The CIDR block for the environment's VPC
+    Type: String
+    AllowedPattern: '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'
+  MinInstances:
+    Description: Minimum number of nginx instances to run
+    Type: Number
+    MinValue: 1
+    Default: 1
+  MaxInstances:
+    Description: Maximum number of nginx instances to run
+    Type: Number
+    MinValue: 1
+    Default: 1
+  InstanceProfileArn:
+    Description: The ARN of the instance profile to use for the nginx instances
+    Type: String
+
+Resources:
+  Network:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/deploy-to-multiple-regions-with-codepipeline/infra/nested-stacks-network.yaml
+      Parameters:
+        Name:
+          Ref: Name
+        NetworkCIDR:
+          Ref: NetworkCIDR
+  LoadBalancer:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/deploy-to-multiple-regions-with-codepipeline/infra/nested-stacks-loadbalancer.yaml
+      Parameters:
+        Name:
+          Ref: Name
+        VpcId:
+          Fn::GetAtt:
+          - Network
+          - Outputs.VpcId
+        SubnetIds:
+          Fn::Join:
+          - ','
+          - - Fn::GetAtt:
+              - Network
+              - Outputs.SubnetIDPublica
+            - Fn::GetAtt:
+              - Network
+              - Outputs.SubnetIDPublicb
+            - Fn::GetAtt:
+              - Network
+              - Outputs.SubnetIDPublicc
+  Docker:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/deploy-to-multiple-regions-with-codepipeline/infra/nested-stacks-docker.yaml
+      Parameters:
+        Environment:
+          Ref: Name
+        VpcId:
+          Fn::GetAtt:
+          - Network
+          - Outputs.VpcId
+        SubnetIds:
+          Fn::Join:
+          - ','
+          - - Fn::GetAtt:
+              - Network
+              - Outputs.SubnetIDPrivatea
+            - Fn::GetAtt:
+              - Network
+              - Outputs.SubnetIDPrivateb
+            - Fn::GetAtt:
+              - Network
+              - Outputs.SubnetIDPrivatec
+        TargetGroupArn:
+          Fn::GetAtt:
+          - LoadBalancer
+          - Outputs.TargetGroupArn
+        MinInstances:
+          Ref: MinInstances
+        MaxInstances:
+          Ref: MaxInstances
+        InstanceProfileArn:
+          Ref: InstanceProfileArn
+
+Outputs:
+  Url:
+    Description: The url that can be used to reach the load balancer for the environment
+    Value:
+      Fn::GetAtt:
+      - LoadBalancer
+      - Outputs.Url
+  DockerAsg:
+    Description: The name of the autoscaling group for docker
+    Value:
+      Fn::GetAtt:
+      - Docker
+      - Outputs.Asg

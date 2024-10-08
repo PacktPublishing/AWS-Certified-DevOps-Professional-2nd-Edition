@@ -1,0 +1,61 @@
+version: 0.2
+
+env:
+  variables:
+    DOCKER_IMAGE_REPO_NAME: codebuild-app
+
+phases:
+  install:
+    runtime-versions:
+      golang: 1.23
+    commands:
+    - go install github.com/jstemmer/go-junit-report/v2@latest
+    - go install github.com/axw/gocov/gocov@latest
+    - go install github.com/AlekSi/gocov-xml@latest
+
+  pre_build:
+    commands:
+    - echo Logging in to Amazon ECR
+    - aws --version
+    - ECR_DOCKER_REPO="$(echo ${CODEBUILD_BUILD_ARN} | cut -f5 -d':').dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com"
+    - aws ecr get-login-password --region $AWS_DEFAULT_REGION > docker-login-password.txt
+    - cat docker-login-password.txt | docker login --username AWS  --password-stdin $ECR_DOCKER_REPO
+    - export DOCKER_IMAGE_FULL_NAME=$ECR_DOCKER_REPO/$DOCKER_IMAGE_REPO_NAME:$CODEBUILD_RESOLVED_SOURCE_VERSION
+
+  build:
+    commands:
+    - echo Tests started on `date`
+    - go test ./... -json -cover -coverprofile=test-coverage.out > test-results.json || true
+    - cat test-results.json | go-junit-report -set-exit-code > test-results.xml
+    - gocov convert test-coverage.out | gocov-xml > test-coverage.xml
+    - echo Tests ran successfully. Build started on `date`
+    - docker build --tag $DOCKER_IMAGE_FULL_NAME .
+
+  post_build:
+    commands:
+    - echo Build completed on `date`
+    - echo Pushing the Docker image...
+    - docker push $DOCKER_IMAGE_FULL_NAME
+    - echo Writing image name to file...
+    - echo $DOCKER_IMAGE_FULL_NAME > image-name.txt
+
+artifacts:
+  files:
+  - test-coverage.out
+  - test-results.json
+  - test-results.xml
+  - test-coverage.xml
+  - image-name.txt
+  - docker-login-password.txt
+  - appspec.yml
+  - scripts/*
+
+reports:
+  test-reports:
+    files:
+    - test-results.xml
+    file-format: "JUNITXML"
+  test-coverage:
+    files:
+    - test-coverage.xml
+    file-format: "COBERTURAXML"

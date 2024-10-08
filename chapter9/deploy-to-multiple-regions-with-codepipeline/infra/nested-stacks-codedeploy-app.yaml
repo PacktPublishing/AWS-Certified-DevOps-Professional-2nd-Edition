@@ -1,0 +1,63 @@
+Description: This template creates the CodeDeploy deployment and supporting resources for deploying a service to docker daemon running on EC2 instances
+
+Transform: AWS::LanguageExtensions
+
+Parameters:
+  S3BucketName:
+    Description: The base name of the S3 bucket containing deployment revisions
+    Type: String
+  ApplicationName:
+    Description: The name of the application
+    Type: String
+  ServiceRoleArn:
+    Description: The ARN of the service role to use for CodeDeploy
+    Type: String
+  AutoScalingGroupDev:
+    Description: The name of the autoscaling group managing the dev EC2 instances to deploy to
+    Type: String
+  AutoScalingGroupProd:
+    Description: The name of the autoscaling group managing the prod EC2 instances to deploy to
+    Type: String
+
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName:
+        Fn::Sub: ${S3BucketName}-${AWS::Region}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+  App:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ApplicationName:
+        Ref: ApplicationName
+      ComputePlatform: Server
+      Tags:
+      - Key: Name
+        Value:
+          Ref: ApplicationName
+  Fn::ForEach::DeploymentGroups:
+  - DeploymentGroup
+  - ['Dev', 'Prod']
+  - 'DeploymentGroup${DeploymentGroup}':
+      Type: AWS::CodeDeploy::DeploymentGroup
+      Properties:
+        ApplicationName:
+          Ref: App
+        DeploymentGroupName:
+          Fn::Sub: ${App}-${DeploymentGroup}
+        DeploymentConfigName: CodeDeployDefault.OneAtATime
+        ServiceRoleArn:
+          Ref: ServiceRoleArn
+        AutoScalingGroups:
+        - Ref:
+            Fn::Sub: AutoScalingGroup${DeploymentGroup}
+        Tags:
+        - Key: Name
+          Value:
+            Ref: ApplicationName

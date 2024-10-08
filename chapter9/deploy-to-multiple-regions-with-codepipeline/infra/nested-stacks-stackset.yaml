@@ -1,0 +1,94 @@
+Description: This template creates docker servers for different environments
+
+Transform: AWS::LanguageExtensions
+
+Parameters:
+  NetworkCIDR:
+    Description: The CIDR block to share among the environments. It should be a minimum of /19
+    Type: String
+    AllowedPattern: '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'
+
+  S3Bucket:
+    Description: The base name of the S3 bucket containing deployment revisions
+    Type: String
+
+  AppName:
+    Description: The name of the application
+    Type: String
+
+  CodeDeployServiceRoleArn:
+    Description: The ARN of the service role to use for CodeDeploy
+    Type: String
+
+  CodeDeploEC2InstanceProfileArn:
+    Description: The ARN of the instance profile to use for EC2 instances to deploy to with CodeDeploy
+    Type: String
+
+Resources:
+  EnvironmentDev:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/deploy-to-multiple-regions-with-codepipeline/infra/nested-stacks-environment.yaml
+      Parameters:
+        Name: dev
+        NetworkCIDR:
+          Fn::Select:
+          - 0
+          - Fn::Cidr:
+            - Ref: NetworkCIDR
+            - 2
+            - 12
+        InstanceProfileArn:
+          Ref: CodeDeploEC2InstanceProfileArn
+
+  EnvironmentProd:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/deploy-to-multiple-regions-with-codepipeline/infra/nested-stacks-environment.yaml
+      Parameters:
+        Name: prod
+        NetworkCIDR:
+          Fn::Select:
+          - 1
+          - Fn::Cidr:
+            - Ref: NetworkCIDR
+            - 2
+            - 12
+        InstanceProfileArn:
+          Ref: CodeDeploEC2InstanceProfileArn
+        MinInstances: 2
+        MaxInstances: 5
+
+  CodeDeployApp:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/deploy-to-multiple-regions-with-codepipeline/infra/nested-stacks-codedeploy-app.yaml
+      Parameters:
+        ApplicationName:
+          Ref: AppName
+        S3BucketName:
+          Ref: S3Bucket
+        ServiceRoleArn:
+          Ref: CodeDeployServiceRoleArn
+        AutoScalingGroupDev:
+          Fn::GetAtt:
+          - EnvironmentDev
+          - Outputs.DockerAsg
+        AutoScalingGroupProd:
+          Fn::GetAtt:
+          - EnvironmentProd
+          - Outputs.DockerAsg
+
+Outputs:
+  DevUrl:
+    Description: The url that can be used to reach the load balancer for the dev environment
+    Value:
+      Fn::GetAtt:
+      - EnvironmentDev
+      - Outputs.Url
+  ProdUrl:
+    Description: The url that can be used to reach the load balancer for the prod environment
+    Value:
+      Fn::GetAtt:
+      - EnvironmentProd
+      - Outputs.Url

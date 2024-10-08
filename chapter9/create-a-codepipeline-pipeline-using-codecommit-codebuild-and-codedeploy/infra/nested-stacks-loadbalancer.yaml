@@ -1,0 +1,93 @@
+Description: |
+  This template creates a public-facing network load balancer
+
+Transform: AWS::LanguageExtensions
+
+Parameters:
+  Name:
+    Description: The name of the Load balancer to create
+    Type: String
+    AllowedPattern: '[a-z]{3,}'
+  VpcId:
+    Description: The ID of the VPC to create the load balancer in
+    Type: AWS::EC2::VPC::Id
+  SubnetIds:
+    Description: The subnet to create the load balancer in
+    Type: List<AWS::EC2::Subnet::Id>
+
+Resources:
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Port: 80
+      Protocol: TCP
+      VpcId:
+        Ref: VpcId
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: 10
+      Tags:
+      - Key: Name
+        Value:
+          Ref: Name
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription:
+        Fn::Sub: lb ${Name}
+      GroupName:
+        Fn::Sub: ${AWS::StackName}-${Name}-lb
+      VpcId:
+        Ref: VpcId
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: ${Name}-lb
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name:
+        Ref: Name
+      Scheme: internet-facing
+      SecurityGroups:
+      - Ref: SecurityGroup
+      Subnets:
+        Ref: SubnetIds
+      # A network loadbalancer is not the most appropriate option here
+      # It is however use for its relatively lower cost as it also serves the purpose of the exercise.
+      Type: network
+      Tags:
+      - Key: Name
+        Value:
+          Ref: Name
+  LoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn:
+        Ref: LoadBalancer
+      Port: 80
+      Protocol: TCP
+      DefaultActions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: TargetGroup
+
+Outputs:
+  TargetGroupArn:
+    Description: The ARN of the target group for the load balancer
+    Value:
+      Ref: TargetGroup
+  Url:
+    Description: The url that can be used to reach the load balancer
+    Value:
+      Fn::Sub:
+      - http://${LoadBalancerDNSName}
+      - LoadBalancerDNSName:
+          Fn::GetAtt:
+          - LoadBalancer
+          - DNSName

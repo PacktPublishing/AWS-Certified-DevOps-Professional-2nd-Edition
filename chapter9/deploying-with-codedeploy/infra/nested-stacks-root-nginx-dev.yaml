@@ -1,0 +1,60 @@
+Description: This template creates nginx servers for different environments
+
+Transform: AWS::LanguageExtensions
+
+Parameters:
+  S3Bucket:
+    Description: The name of the S3 bucket containing deployment revisions
+    Type: String
+
+  NetworkCIDR:
+    Description: The CIDR block to share among the environments. It should be a minimum of /19
+    Type: String
+    AllowedPattern: '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'
+
+Resources:
+  CodeDeployServiceRoles:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/deploying-with-codedeploy/infra/nested-stacks-codedeploy-roles.yaml
+      Parameters:
+        S3Bucket:
+          Ref: S3Bucket
+
+  EnvironmentDev:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/deploying-with-codedeploy/infra/nested-stacks-environment.yaml
+      Parameters:
+        Name: dev
+        NetworkCIDR:
+          Fn::Select:
+          - 0
+          - Fn::Cidr:
+            - Ref: NetworkCIDR
+            - 2
+            - 12
+        InstanceProfileArn:
+          Fn::GetAtt:
+          - CodeDeployServiceRoles
+          - Outputs.EC2InstanceProfileArn
+
+Outputs:
+  CodeDeployServiceRole:
+    Description: The ARN of the CodeDeploy service role
+    Value:
+      Fn::GetAtt:
+      - CodeDeployServiceRoles
+      - Outputs.ServiceRoleArn
+  DevUrl:
+    Description: The url that can be used to reach the load balancer for the dev environment
+    Value:
+      Fn::GetAtt:
+      - EnvironmentDev
+      - Outputs.Url
+  NginxAsg:
+    Description: The name of the autoscaling group for nginx
+    Value:
+      Fn::GetAtt:
+      - EnvironmentDev
+      - Outputs.NginxAsg

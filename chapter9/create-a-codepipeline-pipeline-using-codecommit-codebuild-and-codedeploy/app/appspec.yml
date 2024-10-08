@@ -1,0 +1,9 @@
+version: 0.0
+os: linux
+hooks:
+  AfterInstall:
+  - location: /scripts/stop-old-version.sh
+    timeout: 30
+  ApplicationStart:
+  - location: /scripts/start-new-version.sh
+    timeout: 30

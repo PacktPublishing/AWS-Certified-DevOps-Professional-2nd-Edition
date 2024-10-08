@@ -1,0 +1,78 @@
+Description: This template creates the IAM roles needed for CodeDeploy
+
+Parameters:
+  S3Bucket:
+    Description: The name of the S3 bucket containing deployment revisions
+    Type: String
+
+Resources:
+  ServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: ${AWS::StackName}-codedeploy
+      Description: Service role for CodeDeploy
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: codedeploy.amazonaws.com
+          Action: 'sts:AssumeRole'
+      Tags:
+      - Key: Name
+        Value: codedeploy
+
+  EC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: ${AWS::StackName}-codedeploy-ec2
+      Description: IAM instance profile for CodeDeploy
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: 'sts:AssumeRole'
+      Policies:
+      - PolicyName: CodeDeployInstanceProfile
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - 's3:Get*'
+            - 's3:List*'
+            Resource:
+            - Fn::Sub: 'arn:aws:s3:::${S3Bucket}'
+            - Fn::Sub: 'arn:aws:s3:::${S3Bucket}/*'
+            - 'arn:aws:s3:::aws-codedeploy-*'
+      Tags:
+      - Key: Name
+        Value: codedeploy-ec2
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName:
+        Fn::Sub: ${AWS::StackName}-codedeploy
+      Roles:
+      - Ref: EC2InstanceRole
+
+Outputs:
+  ServiceRoleArn:
+    Description: The ARN of the IAM role used by CodeDeploy
+    Value:
+      Fn::GetAtt:
+      - ServiceRole
+      - Arn
+  EC2InstanceProfileArn:
+    Description: The ARN of the IAM role used as instance profile for EC2 instances CodeDeploy deploys to
+    Value:
+      Fn::GetAtt:
+      - EC2InstanceProfile
+      - Arn

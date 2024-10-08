@@ -1,0 +1,95 @@
+Description: This template creates AWS resources needed to have a fucntional network for an environment
+
+Transform: AWS::LanguageExtensions
+
+Parameters:
+  Name:
+    Description: The name of the environment
+    Type: String
+    AllowedPattern: '[a-z]{3,}'
+  NetworkCIDR:
+    Description: The CIDR block for the environment's VPC
+    Type: String
+    AllowedPattern: '^([0-9]{1,3}\.){3}[0-9]{1,3}/[0-9]{1,2}$'
+
+Resources:
+  VPC:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-codecommit-codebuild-and-codedeploy/infra/nested-stacks-vpc.yaml
+      Parameters:
+        Name:
+          Ref: Name
+        CIDR:
+          Ref: NetworkCIDR
+  Fn::ForEach::NAT:
+  - Az
+  - ['a', 'b', 'c']
+  - 'NAT${Az}':
+      Type: AWS::CloudFormation::Stack
+      Properties:
+        # Using NAT instances instead of a NAT gateway for the sake of cost
+        TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-codecommit-codebuild-and-codedeploy/infra/nested-stacks-nat-instance.yaml
+        Parameters:
+          Environment:
+            Ref: Name
+          VpcId:
+            Fn::GetAtt:
+            - VPC
+            - Outputs.VpcId
+          SubnetId:
+            Fn::GetAtt:
+            - VPC
+            - Fn::Sub: Outputs.SubnetIDPublic${Az}
+          SubnetAz:
+            Fn::Sub: ${AWS::Region}${Az}
+          RouteTableIds:
+            Fn::Join:
+            - ','
+            - - Fn::GetAtt:
+                - VPC
+                - Fn::Sub: Outputs.RouteTableIDPrivate${Az}
+              - Fn::GetAtt:
+                - VPC
+                - Fn::Sub: Outputs.RouteTableIDDB${Az}
+          SubnetCidrs:
+            Fn::Join:
+            - ','
+            - - Fn::GetAtt:
+                - VPC
+                - Fn::Sub: Outputs.SubnetCIDRPrivate${Az}
+              - Fn::GetAtt:
+                - VPC
+                - Fn::Sub: Outputs.SubnetCIDRDB${Az}
+
+Outputs:
+  VpcId:
+    Description: The ID of the created VPC for ${Name}
+    Value:
+      Fn::GetAtt:
+      - VPC
+      - Outputs.VpcId
+  Fn::ForEach::SubnetIDs:
+  - Az
+  - ['a', 'b', 'c']
+  - 'SubnetIDPublic${Az}':
+      Description:
+        Fn::Sub: The ID of the Public subnet in ${AWS::Region}${Az} for ${Name}
+      Value:
+        Fn::GetAtt:
+        - VPC
+        - Fn::Sub: Outputs.SubnetIDPublic${Az}
+    'SubnetIDPrivate${Az}':
+      Description:
+        Fn::Sub: The ID of the private subnet in ${AWS::Region}${Az} for ${Name}
+      Value:
+        Fn::GetAtt:
+        - VPC
+        - Fn::Sub: Outputs.SubnetIDPrivate${Az}
+    'SubnetIDDB${Az}':
+      Description:
+        Fn::Sub: The ID of the DB subnet in ${AWS::Region}${Az} for ${Name}
+      Value:
+        Fn::GetAtt:
+        - VPC
+        - Fn::Sub: Outputs.SubnetIDDB${Az}

@@ -1,0 +1,76 @@
+Description: This template creates the IAM roles needed for CodePipeline
+
+Parameters:
+  S3Bucket:
+    Description: The name of the S3 bucket containing pipeline revisions
+    Type: String
+
+Resources:
+  ServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Fn::Sub: ${AWS::StackName}-codepipeline
+      Description: Service role for CodePipeline
+      Policies:
+      - PolicyName:
+          Fn::Sub: ${AWS::StackName}-codepipeline
+        PolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+          - Effect: Allow
+            Action:
+            - 'iam:PassRole'
+            Resource: '*'
+            Condition:
+              StringEqualsIfExists:
+                iam:PassedToService:
+                - ec2.amazonaws.com
+          - Effect: Allow
+            Action:
+            - 'codecommit:CancelUploadArchive'
+            - 'codecommit:GetBranch'
+            - 'codecommit:GetCommit'
+            - 'codecommit:GetRepository'
+            - 'codecommit:GetUploadArchiveStatus'
+            - 'codecommit:UploadArchive'
+            Resource: '*'
+          - Effect: Allow
+            Action:
+            - 'codebuild:BatchGetBuilds'
+            - 'codebuild:StartBuild'
+            - 'codebuild:BatchGetBuildBatches'
+            - 'codebuild:StartBuildBatch'
+            Resource: '*'
+          - Effect: Allow
+            Action:
+            - 'codedeploy:CreateDeployment'
+            - 'codedeploy:GetApplication'
+            - 'codedeploy:GetApplicationRevision'
+            - 'codedeploy:GetDeployment'
+            - 'codedeploy:GetDeploymentConfig'
+            - 'codedeploy:RegisterApplicationRevision'
+            Resource: '*'
+          - Effect: Allow
+            Action:
+            - 's3:*'
+            Resource:
+            - Fn::Sub: 'arn:aws:s3:::${S3Bucket}-*'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: codepipeline.amazonaws.com
+          Action: 'sts:AssumeRole'
+      Tags:
+      - Key: Name
+        Value: codepipeline
+
+Outputs:
+  ServiceRoleArn:
+    Description: The ARN of the IAM role used by CodePipeline
+    Value:
+      Fn::GetAtt:
+      - ServiceRole
+      - Arn

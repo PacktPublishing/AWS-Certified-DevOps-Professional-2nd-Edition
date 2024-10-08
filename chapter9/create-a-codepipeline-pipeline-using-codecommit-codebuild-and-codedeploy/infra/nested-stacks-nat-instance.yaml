@@ -1,0 +1,98 @@
+Description: This template creates a NAT instance in a specified subnet and add the default route to the provided route table
+
+Transform: AWS::LanguageExtensions
+
+Parameters:
+  Environment:
+    Description: The environment this stack is for
+    Type: String
+    AllowedPattern: '[a-z]{3,}'
+  VpcId:
+    Description: The ID of the VPC to use
+    Type: AWS::EC2::VPC::Id
+  SubnetId:
+    Description: The subnet to create the NAT instance in. The subnet must be a public subnet
+    Type: AWS::EC2::Subnet::Id
+  SubnetAz:
+    Description: The AZ of the subnet to create the NAT instance in
+    Type: AWS::EC2::AvailabilityZone::Name
+  RouteTableIds:
+    Description: The IDs of the route table of subnets to handle outbound internet traffic for
+    Type: CommaDelimitedList
+  SubnetCidrs:
+    Description: The CIDRs of the subnet to handle outbound internet traffic for
+    Type: CommaDelimitedList
+  AmiId:
+    Description: AMI to use for the NAT instance
+    Type: AWS::EC2::Image::Id
+    # Source: amazon/amzn-ami-vpc-nat-2018.03.0.20230322.0-x86_64-ebs
+    # This is the AMI ID for eu-west-1
+    Default: ami-030f7bda8aedd95a7
+
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: nat instance
+      GroupName:
+        Fn::Sub: ${Environment}-nat-instance-${SubnetAz}
+      SecurityGroupEgress:
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: '-1'
+        FromPort: -1
+        ToPort: -1
+      VpcId:
+        Ref: VpcId
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: ${Environment}-nat-instance-${SubnetAz}
+      - Key: Environment
+        Value:
+          Ref: Environment
+  Fn::ForEach::SecurityGroupIngress:
+  - Cidr
+  - Ref: SubnetCidrs
+  - 'SecurityGroupIngress&{Cidr}':
+      Type: AWS::EC2::SecurityGroupIngress
+      Properties:
+        GroupId:
+          Fn::GetAtt:
+          - SecurityGroup
+          - GroupId
+        CidrIp:
+          Ref: Cidr
+        Description:
+          Fn::Sub: Full access from ${Cidr}
+        IpProtocol: '-1'
+        FromPort: -1
+        ToPort: -1
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId:
+        Ref: AmiId
+      InstanceType: t3.micro
+      SubnetId:
+        Ref: SubnetId
+      SecurityGroupIds:
+      - Ref: SecurityGroup
+      SourceDestCheck: false
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: ${Environment}-nat-instance-${SubnetAz}
+      - Key: Environment
+        Value:
+          Ref: Environment
+  Fn::ForEach::SubnetDefaultRoute:
+  - RouteTable
+  - Ref: RouteTableIds
+  - 'SubnetDefaultRoute&{RouteTable}':
+      Type: AWS::EC2::Route
+      Properties:
+        RouteTableId:
+          Ref: RouteTable
+        DestinationCidrBlock: 0.0.0.0/0
+        InstanceId:
+          Ref: Instance

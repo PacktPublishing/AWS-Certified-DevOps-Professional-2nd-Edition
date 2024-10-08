@@ -1,0 +1,69 @@
+Description: This template creates IAM resources needed to create the stackset to deploy with codepipeline
+
+Transform: AWS::LanguageExtensions
+
+Parameters:
+  S3Bucket:
+    Description: The base name of the S3 bucket containing deployment revisions
+    Type: String
+
+Resources:
+  CodeDeployServiceRoles:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/deploy-to-multiple-regions-with-codepipeline/infra/nested-stacks-codedeploy-roles.yaml
+      Parameters:
+        S3Bucket:
+          Ref: S3Bucket
+
+  StackSetRoles:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/deploy-to-multiple-regions-with-codepipeline/infra/nested-stacks-stackset-roles.yaml
+      Parameters:
+        S3Bucket:
+          Ref: S3Bucket
+        CodeDeployServiceRoleArn:
+          Fn::GetAtt:
+          - CodeDeployServiceRoles
+          - Outputs.ServiceRoleArn
+
+  CodePipelineServiceRole:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/deploy-to-multiple-regions-with-codepipeline/infra/nested-stacks-codepipeline-role.yaml
+      Parameters:
+        S3Bucket:
+          Ref: S3Bucket
+
+Outputs:
+  StackSetAdminRoleArn:
+    Description: The ARN of the admin IAM role
+    Value:
+      Fn::GetAtt:
+      - StackSetRoles
+      - Outputs.AdminRoleArn
+  StackSetExecutionRoleName:
+    Description: The Name of the execution IAM role
+    Value:
+      Fn::GetAtt:
+      - StackSetRoles
+      - Outputs.ExecutionRoleName
+  CodeDeployServiceRoleArn:
+    Description: The ARN of the CodeDeploy service role
+    Value:
+      Fn::GetAtt:
+      - CodeDeployServiceRoles
+      - Outputs.ServiceRoleArn
+  CodeDeployEC2InstanceProfileArn:
+    Description: The ARN of the IAM role used as instance profile for EC2 instances CodeDeploy deploys to
+    Value:
+      Fn::GetAtt:
+      - CodeDeployServiceRoles
+      - Outputs.EC2InstanceProfileArn
+  CodePipelineServiceRoleArn:
+    Description: The ARN of the CodePipeline service role
+    Value:
+      Fn::GetAtt:
+      - CodePipelineServiceRole
+      - Outputs.ServiceRoleArn

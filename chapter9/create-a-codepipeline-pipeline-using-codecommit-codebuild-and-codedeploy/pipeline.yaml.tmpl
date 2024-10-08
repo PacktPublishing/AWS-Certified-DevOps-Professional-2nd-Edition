@@ -1,0 +1,78 @@
+pipeline:
+  name: <<PIPELINE_NAME>>
+  pipelineType: V2
+  executionMode: SUPERSEDED
+  roleArn: <<CODEPIPELINE_ROLE_ARN>>
+  artifactStore:
+    type: S3
+    location: <<S3_BUCKET_NAME>>
+  stages:
+  - name: Source
+    actions:
+    - name: Source
+      actionTypeId:
+        category: Source
+        owner: AWS
+        provider: CodeCommit
+        version: "1"
+      configuration:
+        BranchName: main
+        OutputArtifactFormat: CODE_ZIP
+        PollForSourceChanges: "false"
+        RepositoryName: <<CODECOMMIT_REPO_NAME>>
+      outputArtifacts:
+      - name: SourceArtifact
+      inputArtifacts: []
+      namespace: SourceVariables
+  - name: Build
+    actions:
+    - name: Build
+      actionTypeId:
+        category: Build
+        owner: AWS
+        provider: CodeBuild
+        version: "1"
+      runOrder: 1
+      configuration:
+        ProjectName: <<CODEBUILD_PROJECT_NAME>>
+      outputArtifacts:
+      - name: BuildArtifact
+      inputArtifacts:
+      - name: SourceArtifact
+      namespace: BuildVariables
+  - name: DeployDev
+    actions:
+    - name: Deploy
+      actionTypeId:
+        category: Deploy
+        owner: AWS
+        provider: CodeDeploy
+        version: "1"
+      configuration:
+        ApplicationName: <<CODEDEPLOY_APPLICATION_NAME>>
+        DeploymentGroupName: <<CODEDEPLOY_DEPLOYMENT_GROUP_NAME_DEV>>
+      outputArtifacts: []
+      inputArtifacts:
+      - name: BuildArtifact
+  - name: DeployProd
+    actions:
+    - name: RequestApproval
+      actionTypeId:
+        category: Approval
+        owner: AWS
+        provider: Manual
+        version: "1"
+      runOrder: 1
+    - name: Deploy
+      actionTypeId:
+        category: Deploy
+        owner: AWS
+        provider: CodeDeploy
+        version: "1"
+      runOrder: 2
+      configuration:
+        ApplicationName: <<CODEDEPLOY_APPLICATION_NAME>>
+        DeploymentGroupName: <<CODEDEPLOY_DEPLOYMENT_GROUP_NAME_PROD>>
+      outputArtifacts: []
+      inputArtifacts:
+      - name: BuildArtifact

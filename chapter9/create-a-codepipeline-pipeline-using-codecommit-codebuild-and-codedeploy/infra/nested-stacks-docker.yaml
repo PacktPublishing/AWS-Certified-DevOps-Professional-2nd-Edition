@@ -1,0 +1,127 @@
+Description: This template creates an autoscaling group running docker
+
+Transform: AWS::LanguageExtensions
+
+Parameters:
+  Environment:
+    Description: The environment this stack is for
+    Type: String
+    AllowedPattern: '[a-z]{3,}'
+  VpcId:
+    Description: The ID of the VPC to use
+    Type: AWS::EC2::VPC::Id
+  SubnetIds:
+    Description: The subnet to create the instances in
+    Type: List<AWS::EC2::Subnet::Id>
+  AmiId:
+    Description: AMI to use for the instances
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    # Fetch and use the latest AL2023 image
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-minimal-kernel-default-x86_64
+  TargetGroupArn:
+    Description: The ARN of the target group to register the instances to
+    Type: String
+  MinInstances:
+    Description: Minimum number of docker instances to run
+    Type: Number
+    MinValue: 1
+    Default: 1
+  MaxInstances:
+    Description: Maximum number of docker instances to run
+    Type: Number
+    MinValue: 1
+    Default: 1
+  InstanceProfileArn:
+    Description: The ARN of the instance profile to use
+    Type: String
+
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription:
+        Fn::Sub: docker server for ${Environment}
+      GroupName:
+        Fn::Sub: ${AWS::StackName}-${Environment}-docker-server
+      VpcId:
+        Ref: VpcId
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: ${Environment}-docker-server
+      - Key: Environment
+        Value:
+          Ref: Environment
+  LaunchTemplate:
+    Type: 'AWS::EC2::LaunchTemplate'
+    Properties:
+      LaunchTemplateName:
+        Fn::Sub: ${AWS::StackName}-${Environment}-docker-server
+      LaunchTemplateData:
+        ImageId:
+          Ref: AmiId
+        InstanceType: t3.micro
+        UserData:
+          Fn::Base64: |
+            #!/bin/bash
+            echo root:serial | chpasswd
+            yum update --assumeyes
+            yum install --assumeyes ruby docker
+            systemctl enable docker --now
+            systemctl status docker
+            usermod -a -G docker ec2-user
+            export AWS_REGION=$(ec2-metadata --region --quiet)
+            curl --output /tmp/codedeploy-agent-install https://aws-codedeploy-${AWS_REGION}.s3.${AWS_REGION}.amazonaws.com/latest/install
+            chmod +x /tmp/codedeploy-agent-install
+            /tmp/codedeploy-agent-install auto
+            systemctl enable codedeploy-agent --now
+            systemctl status codedeploy-agent
+        SecurityGroupIds:
+        - Ref: SecurityGroup
+        IamInstanceProfile:
+          Arn:
+            Ref: InstanceProfileArn
+  ASG:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        SuspendProcesses:
+        - AZRebalance
+    Properties:
+      AutoScalingGroupName:
+        Fn::Sub: ${AWS::StackName}-${Environment}-docker-server
+      LaunchTemplate:
+        LaunchTemplateId:
+          Ref: LaunchTemplate
+        Version:
+          Fn::GetAtt:
+          - LaunchTemplate
+          - LatestVersionNumber
+      MinSize:
+        Ref: MinInstances
+      MaxSize:
+        Ref: MaxInstances
+      VPCZoneIdentifier:
+        Ref: SubnetIds
+      TargetGroupARNs:
+      - Ref: TargetGroupArn
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: ${Environment}-docker-server
+        PropagateAtLaunch: 'true'
+      - Key: Environment
+        Value:
+          Ref: Environment
+        PropagateAtLaunch: 'true'
+
+Outputs:
+  Asg:
+    Description: The name of the autoscaling group for docker
+    Value:
+      Ref: ASG
