@@ -12,8 +12,7 @@ Resources:
   EnvironmentDev:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: example-nested-stacks-environment.yaml
-      # TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/cloudformation/templates/example-nested-stacks-environment.yaml
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/cloudformation/templates/examples/nested-stacks-environment.yaml
       Parameters:
         Name: dev
         NetworkCIDR:
@@ -26,7 +25,7 @@ Resources:
   EnvironmentProd:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/cloudformation/templates/example-nested-stacks-environment.yaml
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/cloudformation/templates/examples/nested-stacks-environment.yaml
       Parameters:
         Name: prod
         NetworkCIDR:

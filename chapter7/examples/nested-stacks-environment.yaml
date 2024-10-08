@@ -26,7 +26,7 @@ Resources:
   Network:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/cloudformation/templates/example-nested-stacks-network.yaml
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/cloudformation/templates/examples/nested-stacks-network.yaml
       Parameters:
         Name:
           Ref: Name
@@ -35,7 +35,7 @@ Resources:
   Nginx:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/cloudformation/templates/example-nested-stacks-nginx.yaml
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/cloudformation/templates/examples/nested-stacks-nginx.yaml
       Parameters:
         Environment:
           Ref: Name

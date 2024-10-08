@@ -16,7 +16,7 @@ Resources:
   VPC:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/cloudformation/templates/example-nested-stacks-vpc.yaml
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/cloudformation/templates/examples/nested-stacks-vpc.yaml
       Parameters:
         Name:
           Ref: Name
@@ -28,7 +28,7 @@ Resources:
   - 'NAT${Az}':
       Type: AWS::CloudFormation::Stack
       Properties:
-        TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/cloudformation/templates/example-nested-stacks-nat-instance.yaml
+        TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/cloudformation/templates/examples/nested-stacks-nat-instance.yaml
         Parameters:
           Environment:
             Ref: Name
