@@ -1,0 +1,55 @@
+Description: This template creates an EC2 instance and deploys nginx and a test web page to it using user data script
+
+Transform: AWS::LanguageExtensions
+
+Parameters:
+  AmiId:
+    Description: AMI to use for the instances
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    # Fetch and use the latest AL2023 image
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-minimal-kernel-default-x86_64
+
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription:
+        Fn::Sub: nginx server for chapter10
+      GroupName:
+        Fn::Sub: ${AWS::StackName}-nginx-server
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: chapter10-nginx-server
+  Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId:
+        Ref: AmiId
+      InstanceType: t3.micro
+      UserData:
+        Fn::Base64: |
+          #!/bin/bash
+          yum update --assumeyes
+          yum install --assumeyes nginx
+          systemctl enable nginx --now
+          systemctl status nginx
+          echo Hello World > /usr/share/nginx/html/index.html
+      SecurityGroupIds:
+      - Ref: SecurityGroup
+
+Outputs:
+  Url:
+    Description: The URL that can be used to connect to the nginx server running on the instance
+    Value:
+      Fn::Sub:
+      - http://${instanceip}
+      - instanceip:
+          Fn::GetAtt:
+          - Instance
+          - PublicDnsName

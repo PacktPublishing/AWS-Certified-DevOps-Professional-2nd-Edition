@@ -1,0 +1,103 @@
+Description: This template creates a public-facing application load balancer
+
+Transform: AWS::LanguageExtensions
+
+Parameters:
+  Name:
+    Description: The name of the Load balancer to create
+    Type: String
+  VpcId:
+    Description: The ID of the VPC to create the load balancer in
+    Type: AWS::EC2::VPC::Id
+  SubnetIds:
+    Description: The subnet to create the load balancer in
+    Type: List<AWS::EC2::Subnet::Id>
+  TargetGroupArnApp1:
+    Description: The ARN of the target group for the first app
+    Type: String
+  TargetGroupArnApp2:
+    Description: The ARN of the target group for the second app
+    Type: String
+
+Resources:
+  SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription:
+        Fn::Sub: lb ${Name}
+      GroupName:
+        Fn::Sub: ${Name}-lb
+      VpcId:
+        Ref: VpcId
+      SecurityGroupIngress:
+      - CidrIp: 0.0.0.0/0
+        IpProtocol: tcp
+        FromPort: 80
+        ToPort: 80
+      Tags:
+      - Key: Name
+        Value:
+          Fn::Sub: ${Name}-lb
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name:
+        Ref: Name
+      Scheme: internet-facing
+      SecurityGroups:
+      - Ref: SecurityGroup
+      Subnets:
+        Ref: SubnetIds
+      Type: application
+      Tags:
+      - Key: Name
+        Value:
+          Ref: Name
+  LoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn:
+        Ref: LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+      - Type: fixed-response
+        FixedResponseConfig:
+          StatusCode: 400
+  ListenerRule1:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: TargetGroupArnApp1
+      Conditions:
+      - Field: host-header
+        HostHeaderConfig:
+          Values:
+          - app1.dummyhostname.com
+      ListenerArn:
+        Ref: LoadBalancerListener
+      Priority: 1
+  ListenerRule2:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+      - Type: forward
+        TargetGroupArn:
+          Ref: TargetGroupArnApp2
+      Conditions:
+      - Field: host-header
+        HostHeaderConfig:
+          Values:
+          - app2.dummyhostname.com
+      ListenerArn:
+        Ref: LoadBalancerListener
+      Priority: 2
+Outputs:
+  DNSName:
+    Description: The url that can be used to reach app1
+    Value:
+      Fn::GetAtt:
+      - LoadBalancer
+      - DNSName

@@ -1,0 +1,36 @@
+Description: This template creates the IAM role to grant permission for connecting to the app server via SSM
+
+Resources:
+  EC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName:
+        Ref: AWS::StackName
+      Description: IAM instance profile for App server
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: ec2.amazonaws.com
+          Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+      - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+      - Key: Name
+        Value: ssm-instance-core
+
+  EC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: ssm-instance-core
+      Roles:
+      - Ref: EC2InstanceRole
+
+Outputs:
+  EC2InstanceProfileArn:
+    Description: The ARN of the IAM role used as instance profile
+    Value:
+      Fn::GetAtt:
+      - EC2InstanceProfile
+      - Arn
