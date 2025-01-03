@@ -1,12 +1,11 @@
-REPO_NAME=chapter8
+REMOTE_GIT_REPO_URL=https://github.com/startnow65/chapter8.git
+export REPO_NAME="$(echo ${REMOTE_GIT_REPO_URL} | sed --regexp-extended 's|.*/(.*).git|\1|g')"
 
-git clone \
-    --config credential.helper='!aws codecommit credential-helper $@' \
-    --config credential.UseHttpPath=true \
-    "$(aws codecommit get-repository \
-        --repository-name "${REPO_NAME}" \
-        --query 'repositoryMetadata.cloneUrlHttp' \
-        --output text)"
+# Read in the access token
+read REMOTE_GIT_REPO_TOKEN
+
+Clone the remote git repository
+git clone "$(echo ${REMOTE_GIT_REPO_URL} | sed --regexp-extended "s|^https://(.*)$|https://oauth:${REMOTE_GIT_REPO_TOKEN}@\1|g")"
 
 cp src-test/* "${REPO_NAME}"
 cd "${REPO_NAME}"
