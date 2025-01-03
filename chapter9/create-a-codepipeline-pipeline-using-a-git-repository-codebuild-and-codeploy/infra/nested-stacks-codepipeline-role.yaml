@@ -28,12 +28,7 @@ Resources:
                 - ec2.amazonaws.com
           - Effect: Allow
             Action:
-            - 'codecommit:CancelUploadArchive'
-            - 'codecommit:GetBranch'
-            - 'codecommit:GetCommit'
-            - 'codecommit:GetRepository'
-            - 'codecommit:GetUploadArchiveStatus'
-            - 'codecommit:UploadArchive'
+            - 'codestar-connections:UseConnection'
             Resource: '*'
           - Effect: Allow
             Action:

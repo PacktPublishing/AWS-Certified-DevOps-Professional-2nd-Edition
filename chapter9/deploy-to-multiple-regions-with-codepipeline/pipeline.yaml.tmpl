@@ -20,13 +20,13 @@ pipeline:
       actionTypeId:
         category: Source
         owner: AWS
-        provider: CodeCommit
+        provider: CodeStarSourceConnection
         version: "1"
       configuration:
+        ConnectionArn: <<REMOTE_GIT_REPO_CONNECTION_ARN>>
+        FullRepositoryId: <<REMOTE_GIT_REPO_ID>>
         BranchName: main
         OutputArtifactFormat: CODE_ZIP
-        PollForSourceChanges: "false"
-        RepositoryName: <<CODECOMMIT_REPO_NAME>>
       outputArtifacts:
       - name: SourceArtifact
       inputArtifacts: []

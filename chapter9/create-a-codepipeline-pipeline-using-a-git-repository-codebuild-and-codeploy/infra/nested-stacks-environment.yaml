@@ -29,7 +29,7 @@ Resources:
   Network:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-codecommit-codebuild-and-codedeploy/infra/nested-stacks-network.yaml
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-a-git-repository-codebuild-and-codeploy/infra/nested-stacks-network.yaml
       Parameters:
         Name:
           Ref: Name
@@ -38,7 +38,7 @@ Resources:
   LoadBalancer:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-codecommit-codebuild-and-codedeploy/infra/nested-stacks-loadbalancer.yaml
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-a-git-repository-codebuild-and-codeploy/infra/nested-stacks-loadbalancer.yaml
       Parameters:
         Name:
           Ref: Name
@@ -61,7 +61,7 @@ Resources:
   Docker:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-codecommit-codebuild-and-codedeploy/infra/nested-stacks-docker.yaml
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-a-git-repository-codebuild-and-codeploy/infra/nested-stacks-docker.yaml
       Parameters:
         Environment:
           Ref: Name

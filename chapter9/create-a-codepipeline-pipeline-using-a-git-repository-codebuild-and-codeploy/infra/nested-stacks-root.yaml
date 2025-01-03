@@ -16,7 +16,7 @@ Resources:
   CodeDeployServiceRoles:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-codecommit-codebuild-and-codedeploy/infra/nested-stacks-codedeploy-roles.yaml
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-a-git-repository-codebuild-and-codeploy/infra/nested-stacks-codedeploy-roles.yaml
       Parameters:
         S3Bucket:
           Ref: S3Bucket
@@ -24,7 +24,7 @@ Resources:
   CodePipelineServiceRole:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-codecommit-codebuild-and-codedeploy/infra/nested-stacks-codepipeline-role.yaml
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-a-git-repository-codebuild-and-codeploy/infra/nested-stacks-codepipeline-role.yaml
       Parameters:
         S3Bucket:
           Ref: S3Bucket
@@ -32,7 +32,7 @@ Resources:
   EnvironmentDev:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-codecommit-codebuild-and-codedeploy/infra/nested-stacks-environment.yaml
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-a-git-repository-codebuild-and-codeploy/infra/nested-stacks-environment.yaml
       Parameters:
         Name: dev
         NetworkCIDR:
@@ -50,7 +50,7 @@ Resources:
   EnvironmentProd:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-codecommit-codebuild-and-codedeploy/infra/nested-stacks-environment.yaml
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-a-git-repository-codebuild-and-codeploy/infra/nested-stacks-environment.yaml
       Parameters:
         Name: prod
         NetworkCIDR:

@@ -16,7 +16,7 @@ Resources:
   VPC:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-codecommit-codebuild-and-codedeploy/infra/nested-stacks-vpc.yaml
+      TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-a-git-repository-codebuild-and-codeploy/infra/nested-stacks-vpc.yaml
       Parameters:
         Name:
           Ref: Name
@@ -29,7 +29,7 @@ Resources:
       Type: AWS::CloudFormation::Stack
       Properties:
         # Using NAT instances instead of a NAT gateway for the sake of cost
-        TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-codecommit-codebuild-and-codedeploy/infra/nested-stacks-nat-instance.yaml
+        TemplateURL: https://devopspro-beyond-2.s3.eu-west-1.amazonaws.com/chapter9/create-a-codepipeline-pipeline-using-a-git-repository-codebuild-and-codeploy/infra/nested-stacks-nat-instance.yaml
         Parameters:
           Environment:
             Ref: Name
