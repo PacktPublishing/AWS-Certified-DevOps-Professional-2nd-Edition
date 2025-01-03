@@ -69,7 +69,6 @@ Resources:
         UserData:
           Fn::Base64: |
             #!/bin/bash
-            echo root:serial | chpasswd
             yum update --assumeyes
             yum install --assumeyes ruby nginx
             systemctl enable nginx --now
